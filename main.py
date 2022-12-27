@@ -44,14 +44,19 @@ def run_epsilon_greedy_experiment(k_num, m_bandits, epsilon, N):
     for i in range(N):
         # epsilon greedy
         p = np.random.random()
-        if p < epsilon:
+        if p < epsilon:  # exploration exploitation trade-off
+            # 在epsilon概率中选择探索
+            # 在所有拉杆中随机选择一个（探索）
             j = np.random.choice(k_num)
         else:
+            # 在（1-epsilon）概率中选择开发
             # 体现greedy思想，选择目前所知回报期望最大的杆
             j = np.argmax([a.estimated_mean for a in m_bandits])
         # 拉动所选杆，并更新该杆的期望
         reward = m_bandits[j].pull()
+        # 更新估计期望
         m_bandits[j].epsilon_greedy_update(reward)
+        # 记录本轮选择的奖励
         player_choice[i] = reward
 
     # 可视化选择过程
@@ -75,9 +80,9 @@ def run_soft_max(k_num, m_bandits, temp, N):
     player_choice = np.empty(N)
 
     for i in range(N):
-        choice = particle_choose(k_num, m_bandits)
-        reward = m_bandits[choice].pull()
-        m_bandits[choice].softmax_update(reward)
+        choice = particle_choose(k_num, m_bandits)  # 粒子模型模拟带权选择
+        reward = m_bandits[choice].pull()  # 拉下拉杆并获取奖励
+        m_bandits[choice].softmax_update(reward)  # 更新估计平均值参数
         total_para = 0
         for j in range(k_num):  # 遍历臂更新softmax参数
             m_bandits[j].para = math.exp(m_bandits[j].estimated_mean / temp)  # 计算每个臂的softmax参数
@@ -103,7 +108,7 @@ def run_soft_max(k_num, m_bandits, temp, N):
 
 
 # ----------------------- soft mix ---------------------------
-def run_soft_mix(k_num, m_bandits, temp, N):
+def run_soft_mix(k_num, m_bandits, temp, N):  # 类似于softmax
     player_choice = np.empty(N)
 
     for i in range(N):
@@ -111,12 +116,12 @@ def run_soft_mix(k_num, m_bandits, temp, N):
         reward = m_bandits[choice].pull()
         m_bandits[choice].softmax_update(reward)
         total_para = 0
-        for j in range(k_num):  # 遍历臂更新softmax参数
-            m_bandits[j].para = math.exp(
-                m_bandits[j].estimated_mean / (temp * math.log(i + 2) / (i + 2)))  # 计算每个臂的softmax参数
-            total_para += m_bandits[j].para  # 计算参数总和
         for j in range(k_num):
-            m_bandits[j].weight = m_bandits[j].para / total_para  # 通过Softmax函数更新选取权重
+            m_bandits[j].para = math.exp(
+                m_bandits[j].estimated_mean / (temp * math.log(i + 2) / (i + 2)))  # 更新的时候乘以一个 log(t)/t 的时间乘子
+            total_para += m_bandits[j].para
+        for j in range(k_num):
+            m_bandits[j].weight = m_bandits[j].para / total_para
         player_choice[i] = reward
 
     # 可视化选择过程
