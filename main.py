@@ -4,7 +4,7 @@ import math
 import random
 
 
-# Bandit Class
+# --------------- Bandit Class -----------------
 class Bandits:
     def __init__(self, m, D, t):
         # 该杆被拉过的次数
@@ -14,7 +14,7 @@ class Bandits:
         self.D = D
         self.estimated_mean = 0
 
-        # for soft max
+        # parameters for soft max
         self.para = math.exp(self.estimated_mean / t)
         self.weight = 0
 
@@ -37,7 +37,7 @@ class Bandits:
         self.estimated_mean = (1 - 1.0 / self.N) * self.estimated_mean + 1.0 / self.N * x
 
 
-# epsilon greedy algorithm
+# ------------------- epsilon greedy algorithm -----------------------
 def run_epsilon_greedy_experiment(k_num, m_bandits, epsilon, N):
     player_choice = np.empty(N)
 
@@ -70,7 +70,7 @@ def run_epsilon_greedy_experiment(k_num, m_bandits, epsilon, N):
     return cumulative_average
 
 
-# soft max algorithm
+# --------------------------- soft max algorithm --------------------------
 def run_soft_max(k_num, m_bandits, temp, N):
     player_choice = np.empty(N)
 
@@ -81,6 +81,39 @@ def run_soft_max(k_num, m_bandits, temp, N):
         total_para = 0
         for j in range(k_num):  # 遍历臂更新softmax参数
             m_bandits[j].para = math.exp(m_bandits[j].estimated_mean / temp)  # 计算每个臂的softmax参数
+            total_para += m_bandits[j].para  # 计算参数总和
+        for j in range(k_num):
+            m_bandits[j].weight = m_bandits[j].para / total_para  # 通过Softmax函数更新选取权重
+        player_choice[i] = reward
+
+    # 可视化选择过程
+    cumulative_average = np.cumsum(player_choice) / (np.arange(N) + 1)
+
+    # plot moving average ctr
+    plt.plot(cumulative_average)
+    for i in range(k_num):
+        plt.plot(np.ones(N) * i)
+    plt.xscale('log')
+    plt.show()
+
+    for x in m_bandits:
+        print(x.estimated_mean)
+
+    return cumulative_average
+
+
+# ----------------------- soft mix ---------------------------
+def run_soft_mix(k_num, m_bandits, temp, N):
+    player_choice = np.empty(N)
+
+    for i in range(N):
+        choice = particle_choose(k_num, m_bandits)
+        reward = m_bandits[choice].pull()
+        m_bandits[choice].softmax_update(reward)
+        total_para = 0
+        for j in range(k_num):  # 遍历臂更新softmax参数
+            m_bandits[j].para = math.exp(
+                m_bandits[j].estimated_mean / (temp * math.log(i + 2) / (i + 2)))  # 计算每个臂的softmax参数
             total_para += m_bandits[j].para  # 计算参数总和
         for j in range(k_num):
             m_bandits[j].weight = m_bandits[j].para / total_para  # 通过Softmax函数更新选取权重
@@ -138,7 +171,18 @@ if __name__ == '__main__':
         total += bandits[i].para
     for i in range(k):
         bandits[i].soft_max_init(total)
-        print(bandits[i].weight)
 
     # soft max 实验
     experiment_softmax = run_soft_max(k, bandits, temperature, horizon)
+
+    # 重置杆属性，为soft max初始化
+    total = 0
+    for i in range(k):
+        bandits[i].para = math.exp(0)
+        total += bandits[i].para
+    for i in range(k):
+        bandits[i].soft_max_init(total)
+
+    # soft mix 实验
+    temperature = 100
+    experiment_soft_mix = run_soft_mix(k, bandits, temperature, horizon)
