@@ -62,13 +62,13 @@ def run_epsilon_greedy_experiment(k_num, m_bandits, epsilon, N):
     # 可视化选择过程
     cumulative_average = np.cumsum(player_choice) / (np.arange(N) + 1)
 
-    # plot moving average ctr
+    # 绘制每一步的回报平均值表
     plt.plot(cumulative_average)
     for i in range(k_num):
-        plt.plot(np.ones(N) * i)
+        plt.plot(np.ones(N) * bandits[i].m)
     plt.xscale('log')
     plt.show()
-
+    print("Estimated mean for each bandit in epsilon greedy")
     for x in m_bandits:
         print(x.estimated_mean)
 
@@ -94,13 +94,13 @@ def run_soft_max(k_num, m_bandits, temp, N):
     # 可视化选择过程
     cumulative_average = np.cumsum(player_choice) / (np.arange(N) + 1)
 
-    # plot moving average ctr
+    # 绘制每一步的回报平均值表
     plt.plot(cumulative_average)
     for i in range(k_num):
-        plt.plot(np.ones(N) * i)
+        plt.plot(np.ones(N) * bandits[i].m)
     plt.xscale('log')
     plt.show()
-
+    print("Estimated mean for each bandit in Soft max")
     for x in m_bandits:
         print(x.estimated_mean)
 
@@ -127,13 +127,13 @@ def run_soft_mix(k_num, m_bandits, temp, N):  # 类似于softmax
     # 可视化选择过程
     cumulative_average = np.cumsum(player_choice) / (np.arange(N) + 1)
 
-    # plot moving average ctr
+    # 绘制每一步的回报平均值表
     plt.plot(cumulative_average)
     for i in range(k_num):
-        plt.plot(np.ones(N) * i)
+        plt.plot(np.ones(N) * bandits[i].m)
     plt.xscale('log')
     plt.show()
-
+    print("Estimated mean for each bandit in Soft mix")
     for x in m_bandits:
         print(x.estimated_mean)
 
@@ -155,16 +155,16 @@ if __name__ == '__main__':
     # 测试数量
     horizon = 10000
     # epsilon
-    eps = 0.1
+    eps = 0.01
     # temperature for soft_max
-    temperature = 2
+    temperature = 0.1
     # 臂数
     k = 10
     # 臂组
     bandits = []
     # 分别生成十个回报符合正态分布的拉杆，他们的均值为0到9的随机整数，方差为1
     for i in range(k):
-        bandits.append(Bandits(np.random.randint(1, 10), 1, temperature))
+        bandits.append(Bandits(i + 1, 4, temperature))
         print("Bandit ", i + 1, " mean ", bandits[i].m, " var ", bandits[i].D)
 
     # epsilon greedy 实验
@@ -189,5 +189,5 @@ if __name__ == '__main__':
         bandits[i].soft_max_init(total)
 
     # soft mix 实验
-    temperature = 100
+    temperature = 10
     experiment_soft_mix = run_soft_mix(k, bandits, temperature, horizon)
