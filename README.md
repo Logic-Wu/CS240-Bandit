@@ -10,8 +10,7 @@
 
 ### SoftMix
 
-
-
 ### Reference:
 
-[Multi-armed Bandit Algorithms and Empirical Evaluation]:https://link.springer.com/chapter/10.1007/11564096_42
+Multi-armed Bandit Algorithms and Empirical Evaluation: https://link.springer.com/chapter/10.1007/11564096_42
+
