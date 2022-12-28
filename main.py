@@ -18,14 +18,18 @@ class Bandits:
         self.para = math.exp(self.estimated_mean / t)
         self.weight = 0
 
+    # 根据概率分布随机获得reward
+    def pull(self):
+        return self.D * np.random.randn() + self.m
+
+    def greedy_mix_init(self):
+        self.N = 0
+        self.estimated_mean = 0
+
     def soft_max_init(self, t_para):
         self.N = 0
         self.estimated_mean = 0
         self.weight = self.para / t_para
-
-    # 根据概率分布随机获得reward
-    def pull(self):
-        return self.D * np.random.randn() + self.m
 
     # 更新epsilon greedy算法下的估计期望
     def epsilon_greedy_update(self, x):
@@ -45,6 +49,44 @@ def run_epsilon_greedy_experiment(k_num, m_bandits, epsilon, N):
         # epsilon greedy
         p = np.random.random()
         if p < epsilon:  # exploration exploitation trade-off
+            # 在epsilon概率中选择探索
+            # 在所有拉杆中随机选择一个（探索）
+            j = np.random.choice(k_num)
+        else:
+            # 在（1-epsilon）概率中选择开发
+            # 体现greedy思想，选择目前所知回报期望最大的杆
+            j = np.argmax([a.estimated_mean for a in m_bandits])
+        # 拉动所选杆，并更新该杆的期望
+        reward = m_bandits[j].pull()
+        # 更新估计期望
+        m_bandits[j].epsilon_greedy_update(reward)
+        # 记录本轮选择的奖励
+        player_choice[i] = reward
+
+    # 可视化选择过程
+    cumulative_average = np.cumsum(player_choice) / (np.arange(N) + 1)
+
+    # 绘制每一步的回报平均值表
+    plt.plot(cumulative_average)
+    for i in range(k_num):
+        plt.plot(np.ones(N) * bandits[i].m)
+    plt.xscale('log')
+    plt.show()
+    print("Estimated mean for each bandit in epsilon greedy")
+    for x in m_bandits:
+        print(x.estimated_mean)
+
+    return cumulative_average
+
+
+# --------------------------- GreedyMix ---------------------------------
+def run_greedy_mix_experiment(k_num, m_bandits, epsilon, N):
+    player_choice = np.empty(N)
+
+    for i in range(N):
+        # epsilon greedy
+        p = np.random.random()
+        if p < (epsilon * math.log(i + 1) / (i + 1)):  # exploration exploitation trade-off
             # 在epsilon概率中选择探索
             # 在所有拉杆中随机选择一个（探索）
             j = np.random.choice(k_num)
@@ -152,23 +194,34 @@ def particle_choose(k_num, bandit):  # 粒子模型模拟权重
 
 
 if __name__ == '__main__':
-    # 测试数量
-    horizon = 10000
     # epsilon
     eps = 0.01
+    # epsilon mix
+    eps_mix = 100
     # temperature for soft_max
     temperature = 0.1
+    # temperature for soft_mix
+    temperature_mix = 20
+    # 测试数量
+    horizon = 10000
     # 臂数
     k = 10
     # 臂组
     bandits = []
-    # 分别生成十个回报符合正态分布的拉杆，他们的均值为0到9的随机整数，方差为1
+    # 分别生成十个回报符合正态分布的拉杆，他们的均值为1到10，方差为4
     for i in range(k):
         bandits.append(Bandits(i + 1, 4, temperature))
         print("Bandit ", i + 1, " mean ", bandits[i].m, " var ", bandits[i].D)
 
     # epsilon greedy 实验
     experiment_greedy = run_epsilon_greedy_experiment(k, bandits, eps, horizon)
+
+    # 重置杆属性，为greedy mix初始化
+    for i in range(k):
+        bandits[i].greedy_mix_init()
+
+    # greedy mix 实验
+    experiment_greedy_mix = run_greedy_mix_experiment(k, bandits, eps_mix, horizon)
 
     # 重置杆属性，为soft max初始化
     total = 0
@@ -189,5 +242,4 @@ if __name__ == '__main__':
         bandits[i].soft_max_init(total)
 
     # soft mix 实验
-    temperature = 10
-    experiment_soft_mix = run_soft_mix(k, bandits, temperature, horizon)
+    experiment_soft_mix = run_soft_mix(k, bandits, temperature_mix, horizon)
