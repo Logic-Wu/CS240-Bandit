@@ -1,3 +1,11 @@
+# -------------- CS 240 Final Project ------------------
+# -------------- Multi-armed Bandit Algorithm ----------
+# Contributor: Jing Guo, Jiaqiang Huang, Zongxiang Wu
+# Reference: https://link.springer.com/chapter/10.1007/11564096_42
+# GitHub Repository: https://github.com/Logic-Wu/CS240-Bandit
+# Institution: ShanghaiTech University
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import math
