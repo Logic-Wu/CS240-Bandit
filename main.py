@@ -54,7 +54,6 @@ def run_epsilon_greedy_experiment(k_num, m_bandits, epsilon, N):
     player_choice = np.empty(N)
 
     for i in range(N):
-        # epsilon greedy
         p = np.random.random()
         if p < epsilon:  # exploration exploitation trade-off
             # 在epsilon概率中选择探索
@@ -92,7 +91,6 @@ def run_greedy_mix_experiment(k_num, m_bandits, epsilon, N):
     player_choice = np.empty(N)
 
     for i in range(N):
-        # epsilon greedy
         p = np.random.random()
         if p < (epsilon * math.log(i + 1) / (i + 1)):  # exploration exploitation trade-off
             # 在epsilon概率中选择探索
@@ -118,7 +116,7 @@ def run_greedy_mix_experiment(k_num, m_bandits, epsilon, N):
         plt.plot(np.ones(N) * bandits[i].m)
     plt.xscale('log')
     plt.show()
-    print("Estimated mean for each bandit in epsilon greedy")
+    print("Estimated mean for each bandit in greedy mix")
     for x in m_bandits:
         print(x.estimated_mean)
 
